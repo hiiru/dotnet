@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Html;
-using StackExchange.Profiling.Helpers;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Text;
+using Microsoft.AspNetCore.Html;
+using StackExchange.Profiling.Helpers;
 
 namespace StackExchange.Profiling
 {
@@ -32,17 +31,13 @@ namespace StackExchange.Profiling
             bool? showTimeWithChildren = null,
             int? maxTracesToShow = null,
             bool? showControls = null,
-            bool? startHidden = null)
+            bool? startHidden = null,
+            RequestState requestState = null)
         {
             if (profiler == null) return HtmlString.Empty;
 
-            // TODO: Figure out auth
-            var authorized = true; // MiniProfilerMiddleware.Current.Options.ResultsAuthorize?.Invoke(HttpContext.Current.Request) ?? true;
-
-            // unviewed ids are added to this list during Storage.Save, but we know we haven't 
-            // seen the current one yet, so go ahead and add it to the end 
-            var ids = authorized ? MiniProfiler.Settings.Storage.GetUnviewedIds(profiler.User) : new List<Guid>();
-            ids.Add(profiler.Id);
+            var authorized = requestState?.IsAuthroized ?? false;
+            var ids = authorized ? requestState?.RequestIDs ?? Enumerable.Empty<Guid>() : Enumerable.Empty<Guid>();
 
             if (!MiniProfilerMiddleware.Current.Embedded.TryGetResource("include.partial.html", out string format))
             {
