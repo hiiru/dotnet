@@ -104,9 +104,12 @@ namespace StackExchange.Profiling
         {
             try
             {
+                // Are we authorized???
+                var isAuthroized = Options.ResultsAuthorize?.Invoke(context.Request) ?? true;
+
                 // Grab any past profilers (e.g. from a previous redirect)
-                var profilerIds = await MiniProfiler.Settings.Storage.GetUnviewedIdsAsync(current.User).ConfigureAwait(false)
-                                 ?? new List<Guid>(1);
+                var profilerIds = (isAuthroized ? await MiniProfiler.Settings.Storage.GetUnviewedIdsAsync(current.User).ConfigureAwait(false) : null)
+                                    ?? new List<Guid>(1);
 
                 // Always add the current
                 profilerIds.Add(current.Id);
@@ -124,6 +127,7 @@ namespace StackExchange.Profiling
                 {
                     context.Response.Headers.Add("X-MiniProfiler-Ids", profilerIds.ToJson());
                 }
+                context.Items["MiniProfiler-RequestState"] = new RequestState { IsAuthroized = isAuthroized, RequestIDs = profilerIds };
             }
             catch { /* oh no! headers blew up */ }
         }
